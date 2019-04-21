@@ -11,6 +11,20 @@ def score_ci(
     seed=None,
     reject_one_class_samples=True,
 ):
+    """
+    Compute confidence interval for given score function based on labels and predictions using bootstrapping.
+    :param y_true: 1D list or array of labels.
+    :param y_pred: 1D list or array of predictions corresponding to elements in y_true.
+    :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param n_bootstraps: The number of bootstraps. (default: 2000)
+    :param confidence_level: Confidence level for computing confidence interval. (default: 0.95)
+    :param seed: Random seed for reproducibility. (default: None)
+    :param reject_one_class_samples: Whether to reject bootstrapped samples with only one label. For scores like AUC we
+    need at least one positive and one negative sample. (default: True)
+    :return: Score evaluated on labels and predictions, lower confidence interval, upper confidence interval, array of
+    bootstrapped scores.
+    """
+
     assert len(y_true) == len(y_pred)
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
@@ -18,10 +32,8 @@ def score_ci(
     np.random.seed(seed)
     scores = []
     for i in range(n_bootstraps):
-        # bootstrap by sampling indices with replacement
         indices = np.random.randint(0, len(y_true), len(y_true))
         if reject_one_class_samples and len(np.unique(y_true[indices])) < 2:
-            # For scores like AUC we need at least one positive and one negative sample
             continue
         score = score_fun(y_true[indices], y_pred[indices])
         scores.append(score)
@@ -44,6 +56,22 @@ def score_stat_ci(
     seed=None,
     reject_one_class_samples=True,
 ):
+    """
+    Compute confidence interval for given statistic of a score function based on labels and predictions using
+    bootstrapping.
+    :param y_true: 1D list or array of labels.
+    :param y_preds: A list of lists or 2D array of predictions corresponding to elements in y_true.
+    :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param stat_fun: Statistic for which confidence interval is computed. (e.g. np.mean)
+    :param n_bootstraps: The number of bootstraps. (default: 2000)
+    :param confidence_level: Confidence level for computing confidence interval. (default: 0.95)
+    :param seed: Random seed for reproducibility. (default: None)
+    :param reject_one_class_samples: Whether to reject bootstrapped samples with only one label. For scores like AUC we
+    need at least one positive and one negative sample. (default: True)
+    :return: Mean score statistic evaluated on labels and predictions, lower confidence interval, upper confidence
+    interval, array of bootstrapped scores.
+    """
+
     y_true = np.array(y_true)
     y_preds = np.atleast_2d(y_preds)
     assert all(len(y_true) == len(y) for y in y_preds)
@@ -51,11 +79,9 @@ def score_stat_ci(
     np.random.seed(seed)
     scores = []
     for i in range(n_bootstraps):
-        # bootstrap by sampling readers and indices with replacement
         readers = np.random.randint(0, len(y_preds), len(y_preds))
         indices = np.random.randint(0, len(y_true), len(y_true))
         if reject_one_class_samples and len(np.unique(y_true[indices])) < 2:
-            # For scores like AUC we need at least one positive and one negative sample
             continue
         reader_scores = []
         for r in readers:
@@ -80,6 +106,20 @@ def pvalue(
     seed=None,
     reject_one_class_samples=True,
 ):
+    """
+    Compute p-value for hypothesis that score function for model I predictions is higher than for model II predictions
+    using bootstrapping.
+    :param y_true: 1D list or array of labels.
+    :param y_pred1: 1D list or array of predictions for model I corresponding to elements in y_true.
+    :param y_pred2: 1D list or array of predictions for model II corresponding to elements in y_true.
+    :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param n_bootstraps: The number of bootstraps. (default: 2000)
+    :param two_tailed: Whether to use two-tailed test. (default: True)
+    :param seed: Random seed for reproducibility. (default: None)
+    :param reject_one_class_samples: Whether to reject bootstrapped samples with only one label. For scores like AUC we
+    need at least one positive and one negative sample. (default: True)
+    :return: Computed p-value, array of bootstrapped differences of scores.
+    """
     assert len(y_true) == len(y_pred1)
     assert len(y_true) == len(y_pred2)
     y_true = np.array(y_true)
@@ -89,10 +129,8 @@ def pvalue(
     np.random.seed(seed)
     z = []
     for i in range(n_bootstraps):
-        # bootstrap by sampling indices with replacement
         indices = np.random.randint(0, len(y_true), len(y_true))
         if reject_one_class_samples and len(np.unique(y_true[indices])) < 2:
-            # For scores like AUC we need at least one positive and one negative sample
             continue
         score1 = score_fun(y_true[indices], y_pred1[indices])
         score2 = score_fun(y_true[indices], y_pred2[indices])
@@ -115,6 +153,22 @@ def pvalue_stat(
     seed=None,
     reject_one_class_samples=True,
 ):
+    """
+    Compute p-value for hypothesis that given statistic of score function for model I predictions is higher than for
+    model II predictions using bootstrapping.
+    :param y_true: 1D list or array of labels.
+    :param y_preds1: A list of lists or 2D array of predictions for model I corresponding to elements in y_true.
+    :param y_preds2: A list of lists or 2D array of predictions for model II corresponding to elements in y_true.
+    :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param stat_fun: Statistic for which p-value is computed. (e.g. np.mean)
+    :param n_bootstraps: The number of bootstraps. (default: 2000)
+    :param two_tailed: Whether to use two-tailed test. (default: True)
+    :param seed: Random seed for reproducibility. (default: None)
+    :param reject_one_class_samples: Whether to reject bootstrapped samples with only one label. For scores like AUC we
+    need at least one positive and one negative sample. (default: True)
+    :return: Computed p-value, array of bootstrapped differences of scores.
+    """
+
     y_true = np.array(y_true)
     y_preds1 = np.atleast_2d(y_preds1)
     y_preds2 = np.atleast_2d(y_preds2)
@@ -124,12 +178,10 @@ def pvalue_stat(
     np.random.seed(seed)
     z = []
     for i in range(n_bootstraps):
-        # bootstrap by sampling readers and indices with replacement
         readers1 = np.random.randint(0, len(y_preds1), len(y_preds1))
         readers2 = np.random.randint(0, len(y_preds2), len(y_preds2))
         indices = np.random.randint(0, len(y_true), len(y_true))
         if reject_one_class_samples and len(np.unique(y_true[indices])) < 2:
-            # For scores like AUC we need at least one positive and one negative sample
             continue
         reader_scores = []
         for r in readers1:
