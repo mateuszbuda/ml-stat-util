@@ -90,7 +90,7 @@ def score_stat_ci(
 
     mean_score = np.mean(scores)
     sorted_scores = np.array(sorted(scores))
-    alpha = 1.0 - (confidence_level / 2.0)
+    alpha = (1.0 - confidence_level) / 2.0
     ci_lower = sorted_scores[int(round(alpha * len(sorted_scores)))]
     ci_upper = sorted_scores[int(round((1.0 - alpha) * len(sorted_scores)))]
     return mean_score, ci_lower, ci_upper, scores
