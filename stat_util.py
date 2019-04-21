@@ -26,23 +26,18 @@ def score_ci(
     """
 
     assert len(y_true) == len(y_pred)
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
-
-    np.random.seed(seed)
-    scores = []
-    for i in range(n_bootstraps):
-        indices = np.random.randint(0, len(y_true), len(y_true))
-        if reject_one_class_samples and len(np.unique(y_true[indices])) < 2:
-            continue
-        score = score_fun(y_true[indices], y_pred[indices])
-        scores.append(score)
 
     score = score_fun(y_true, y_pred)
-    sorted_scores = np.array(sorted(scores))
-    alpha = (1.0 - confidence_level) / 2.0
-    ci_lower = sorted_scores[int(round(alpha * len(sorted_scores)))]
-    ci_upper = sorted_scores[int(round((1.0 - alpha) * len(sorted_scores)))]
+    _, ci_lower, ci_upper, scores = score_stat_ci(
+        y_true=y_true,
+        y_preds=y_pred,
+        score_fun=score_fun,
+        n_bootstraps=n_bootstraps,
+        confidence_level=confidence_level,
+        seed=seed,
+        reject_one_class_samples=reject_one_class_samples,
+    )
+
     return score, ci_lower, ci_upper, scores
 
 
@@ -120,26 +115,20 @@ def pvalue(
     need at least one positive and one negative sample. (default: True)
     :return: Computed p-value, array of bootstrapped differences of scores.
     """
+
     assert len(y_true) == len(y_pred1)
     assert len(y_true) == len(y_pred2)
-    y_true = np.array(y_true)
-    y_pred1 = np.array(y_pred1)
-    y_pred2 = np.array(y_pred2)
 
-    np.random.seed(seed)
-    z = []
-    for i in range(n_bootstraps):
-        indices = np.random.randint(0, len(y_true), len(y_true))
-        if reject_one_class_samples and len(np.unique(y_true[indices])) < 2:
-            continue
-        score1 = score_fun(y_true[indices], y_pred1[indices])
-        score2 = score_fun(y_true[indices], y_pred2[indices])
-        z.append(score1 - score2)
-
-    p = percentileofscore(z, 0.0, kind="weak") / 100.0
-    if two_tailed:
-        p *= 2.0
-    return p, z
+    return pvalue_stat(
+        y_true=y_true,
+        y_preds1=y_pred1,
+        y_preds2=y_pred2,
+        score_fun=score_fun,
+        n_bootstraps=n_bootstraps,
+        two_tailed=two_tailed,
+        seed=seed,
+        reject_one_class_samples=reject_one_class_samples,
+    )
 
 
 def pvalue_stat(
