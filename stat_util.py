@@ -6,6 +6,7 @@ def score_ci(
     y_true,
     y_pred,
     score_fun,
+    sample_weight=None,
     n_bootstraps=2000,
     confidence_level=0.95,
     seed=None,
@@ -16,6 +17,7 @@ def score_ci(
     :param y_true: 1D list or array of labels.
     :param y_pred: 1D list or array of predictions corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param confidence_level: Confidence level for computing confidence interval. (default: 0.95)
     :param seed: Random seed for reproducibility. (default: None)
@@ -32,6 +34,7 @@ def score_ci(
         y_true=y_true,
         y_preds=y_pred,
         score_fun=score_fun,
+        sample_weight=sample_weight,
         n_bootstraps=n_bootstraps,
         confidence_level=confidence_level,
         seed=seed,
@@ -46,6 +49,7 @@ def score_stat_ci(
     y_preds,
     score_fun,
     stat_fun=np.mean,
+    sample_weight=None,
     n_bootstraps=2000,
     confidence_level=0.95,
     seed=None,
@@ -58,6 +62,7 @@ def score_stat_ci(
     :param y_preds: A list of lists or 2D array of predictions corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
     :param stat_fun: Statistic for which confidence interval is computed. (e.g. np.mean)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param confidence_level: Confidence level for computing confidence interval. (default: 0.95)
     :param seed: Random seed for reproducibility. (default: None)
@@ -80,7 +85,10 @@ def score_stat_ci(
             continue
         reader_scores = []
         for r in readers:
-            reader_scores.append(score_fun(y_true[indices], y_preds[r][indices]))
+            if sample_weight is not None:
+                reader_scores.append(score_fun(y_true[indices], y_preds[r][indices], sample_weight=sample_weight[indices]))
+            else:
+                reader_scores.append(score_fun(y_true[indices], y_preds[r][indices]))
         scores.append(stat_fun(reader_scores))
 
     mean_score = np.mean(scores)
@@ -96,6 +104,7 @@ def pvalue(
     y_pred1,
     y_pred2,
     score_fun,
+    sample_weight=None,
     n_bootstraps=2000,
     two_tailed=True,
     seed=None,
@@ -108,6 +117,7 @@ def pvalue(
     :param y_pred1: 1D list or array of predictions for model I corresponding to elements in y_true.
     :param y_pred2: 1D list or array of predictions for model II corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param two_tailed: Whether to use two-tailed test. (default: True)
     :param seed: Random seed for reproducibility. (default: None)
@@ -124,6 +134,7 @@ def pvalue(
         y_preds1=y_pred1,
         y_preds2=y_pred2,
         score_fun=score_fun,
+        sample_weight=sample_weight,
         n_bootstraps=n_bootstraps,
         two_tailed=two_tailed,
         seed=seed,
@@ -137,6 +148,7 @@ def pvalue_stat(
     y_preds2,
     score_fun,
     stat_fun=np.mean,
+    sample_weight=None,
     n_bootstraps=2000,
     two_tailed=True,
     seed=None,
@@ -150,6 +162,7 @@ def pvalue_stat(
     :param y_preds2: A list of lists or 2D array of predictions for model II corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
     :param stat_fun: Statistic for which p-value is computed. (e.g. np.mean)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param two_tailed: Whether to use two-tailed test. (default: True)
     :param seed: Random seed for reproducibility. (default: None)
@@ -174,11 +187,17 @@ def pvalue_stat(
             continue
         reader_scores = []
         for r in readers1:
-            reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices]))
+            if sample_weight is not None:
+                reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices], sample_weight=sample_weight[indices]))
+            else:
+                reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices]))
         score1 = stat_fun(reader_scores)
         reader_scores = []
         for r in readers2:
-            reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices]))
+            if sample_weight is not None:
+                reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices], sample_weight=sample_weight[indices]))
+            else:
+                reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices]))
         score2 = stat_fun(reader_scores)
         z.append(score1 - score2)
 
