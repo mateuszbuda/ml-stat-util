@@ -6,6 +6,7 @@ def score_ci(
     y_true,
     y_pred,
     score_fun,
+    sample_weight=None,
     n_bootstraps=2000,
     confidence_level=0.95,
     seed=None,
@@ -16,6 +17,7 @@ def score_ci(
     :param y_true: 1D list or array of labels.
     :param y_pred: 1D list or array of predictions corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param confidence_level: Confidence level for computing confidence interval. (default: 0.95)
     :param seed: Random seed for reproducibility. (default: None)
@@ -32,6 +34,7 @@ def score_ci(
         y_true=y_true,
         y_preds=y_pred,
         score_fun=score_fun,
+        sample_weight=sample_weight,
         n_bootstraps=n_bootstraps,
         confidence_level=confidence_level,
         seed=seed,
