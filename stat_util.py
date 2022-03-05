@@ -96,6 +96,7 @@ def pvalue(
     y_pred1,
     y_pred2,
     score_fun,
+    sample_weight=None,
     n_bootstraps=2000,
     two_tailed=True,
     seed=None,
@@ -108,6 +109,7 @@ def pvalue(
     :param y_pred1: 1D list or array of predictions for model I corresponding to elements in y_true.
     :param y_pred2: 1D list or array of predictions for model II corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param two_tailed: Whether to use two-tailed test. (default: True)
     :param seed: Random seed for reproducibility. (default: None)
@@ -124,6 +126,7 @@ def pvalue(
         y_preds1=y_pred1,
         y_preds2=y_pred2,
         score_fun=score_fun,
+        sample_weight=sample_weight,
         n_bootstraps=n_bootstraps,
         two_tailed=two_tailed,
         seed=seed,
