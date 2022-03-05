@@ -137,6 +137,7 @@ def pvalue_stat(
     y_preds2,
     score_fun,
     stat_fun=np.mean,
+    sample_weight=None,
     n_bootstraps=2000,
     two_tailed=True,
     seed=None,
@@ -150,6 +151,7 @@ def pvalue_stat(
     :param y_preds2: A list of lists or 2D array of predictions for model II corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
     :param stat_fun: Statistic for which p-value is computed. (e.g. np.mean)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param two_tailed: Whether to use two-tailed test. (default: True)
     :param seed: Random seed for reproducibility. (default: None)
@@ -174,11 +176,17 @@ def pvalue_stat(
             continue
         reader_scores = []
         for r in readers1:
-            reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices]))
+            if sample_weight is not None:
+                reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices], sample_weight=sample_weight[indices]))
+            else:
+                reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices]))
         score1 = stat_fun(reader_scores)
         reader_scores = []
         for r in readers2:
-            reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices]))
+            if sample_weight is not None:
+                reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices], sample_weight=sample_weight[indices]))
+            else:
+                reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices]))
         score2 = stat_fun(reader_scores)
         z.append(score1 - score2)
 
