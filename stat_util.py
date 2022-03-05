@@ -46,6 +46,7 @@ def score_stat_ci(
     y_preds,
     score_fun,
     stat_fun=np.mean,
+    sample_weight=None,
     n_bootstraps=2000,
     confidence_level=0.95,
     seed=None,
@@ -58,6 +59,7 @@ def score_stat_ci(
     :param y_preds: A list of lists or 2D array of predictions corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
     :param stat_fun: Statistic for which confidence interval is computed. (e.g. np.mean)
+    :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param confidence_level: Confidence level for computing confidence interval. (default: 0.95)
     :param seed: Random seed for reproducibility. (default: None)
@@ -80,7 +82,10 @@ def score_stat_ci(
             continue
         reader_scores = []
         for r in readers:
-            reader_scores.append(score_fun(y_true[indices], y_preds[r][indices]))
+            if sample_weight is not None:
+                reader_scores.append(score_fun(y_true[indices], y_preds[r][indices], sample_weight=sample_weight[indices]))
+            else:
+                reader_scores.append(score_fun(y_true[indices], y_preds[r][indices]))
         scores.append(stat_fun(reader_scores))
 
     mean_score = np.mean(scores)
