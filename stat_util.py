@@ -148,6 +148,7 @@ def pvalue_stat(
     y_preds2,
     score_fun,
     stat_fun=np.mean,
+    compare_fun=np.subtract,
     sample_weight=None,
     n_bootstraps=2000,
     two_tailed=True,
@@ -162,6 +163,7 @@ def pvalue_stat(
     :param y_preds2: A list of lists or 2D array of predictions for model II corresponding to elements in y_true.
     :param score_fun: Score function for which confidence interval is computed. (e.g. sklearn.metrics.accuracy_score)
     :param stat_fun: Statistic for which p-value is computed. (e.g. np.mean)
+    :param compare_fun: Function to determine relative performance. (default: score1 - score2)
     :param sample_weight: 1D list or array of sample weights to pass to score_fun, see e.g. sklearn.metrics.roc_auc_score.
     :param n_bootstraps: The number of bootstraps. (default: 2000)
     :param two_tailed: Whether to use two-tailed test. (default: True)
@@ -185,21 +187,21 @@ def pvalue_stat(
         indices = np.random.randint(0, len(y_true), len(y_true))
         if reject_one_class_samples and len(np.unique(y_true[indices])) < 2:
             continue
-        reader_scores = []
+        reader1_scores = []
         for r in readers1:
             if sample_weight is not None:
-                reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices], sample_weight=sample_weight[indices]))
+                reader1_scores.append(score_fun(y_true[indices], y_preds1[r][indices], sample_weight=sample_weight[indices]))
             else:
-                reader_scores.append(score_fun(y_true[indices], y_preds1[r][indices]))
-        score1 = stat_fun(reader_scores)
-        reader_scores = []
+                reader1_scores.append(score_fun(y_true[indices], y_preds1[r][indices]))
+        score1 = stat_fun(reader1_scores)
+        reader2_scores = []
         for r in readers2:
             if sample_weight is not None:
-                reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices], sample_weight=sample_weight[indices]))
+                reader2_scores.append(score_fun(y_true[indices], y_preds2[r][indices], sample_weight=sample_weight[indices]))
             else:
-                reader_scores.append(score_fun(y_true[indices], y_preds2[r][indices]))
-        score2 = stat_fun(reader_scores)
-        z.append(score1 - score2)
+                reader2_scores.append(score_fun(y_true[indices], y_preds2[r][indices]))
+        score2 = stat_fun(reader2_scores)
+        z.append(compare_fun(score1, score2))
 
     p = percentileofscore(z, 0.0, kind="weak") / 100.0
     if two_tailed:
